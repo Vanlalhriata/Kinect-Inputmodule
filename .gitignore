@@ -7,6 +7,7 @@ Temp
 *.csprog
 *.orig
 *.csproj
+*.dll
 Assets/UnityVS/
 Assets\Plugins\Metro.meta
 Assets\Plugins\Metro\KinectUnityAddin.dll.meta
