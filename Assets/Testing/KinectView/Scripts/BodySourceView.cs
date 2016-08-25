@@ -100,10 +100,12 @@ public class BodySourceView : MonoBehaviour
                 }
                 
                 RefreshBodyObject(body, _Bodies[body.TrackingId]);
+                
+                // TODO: Track closest body
+                // Tracking for UI Component
+                KinectInputModule.instance.TrackBody(body);
+                break;
             }
-
-			// Tracking for UI Component
-			KinectInputModule.instance.TrackBody(body);
         }
     }
     

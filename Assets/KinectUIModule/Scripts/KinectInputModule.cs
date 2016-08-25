@@ -264,6 +264,10 @@ public class KinectInputData
     }
     // Global position of tracked hand
     public Vector3 HandPosition { get; private set; }
+    // Global position of head. Used to calculate hand position on screen
+    public Vector3 HeadPosition { get; private set; }
+    // Save last hand position on screen to smoothen
+    private Vector3 lastScreenHandPosition { get; set; }
     // Temporary hand position of hand, used for draging check
     public Vector3 TempHandPosition { get; private set; }
     // Hover start time, used for waitover type buttons
@@ -275,13 +279,36 @@ public class KinectInputData
     public void UpdateComponent(Body body)
     {
         HandPosition = GetVector3FromJoint(body.Joints[handType]);
+        HeadPosition = GetVector3FromJoint(body.Joints[JointType.Head]);
         CurrentHandState = GetStateFromJointType(body, handType);
         IsTracking = true;
     }
     // Converts hand position to screen coordinates
     public Vector3 GetHandScreenPosition()
     {
-        return Camera.main.WorldToScreenPoint(new Vector3(HandPosition.x, HandPosition.y, HandPosition.z - handScreenPositionMultiplier));
+        // The whole screen will correspond to a small square inside which HandPosition can be.
+        // This allows the user to cover the whole screen using a relatively small area for hand movement.
+        var diffX = HandPosition.x - HeadPosition.x;
+        var diffY = HandPosition.y - HeadPosition.y;
+
+        // diffX range is [-5,-2] for left hand and [2,5] for right hand ([leftEdge, rightEdge])
+        // diffY range is [-4,-1] ([bottom,top])
+        // Normalise to [0,1]
+        
+        if (trackingHandType == KinectUIHandType.Left)
+            diffX = (diffX + 5) / 3f;
+        else
+            diffX = (diffX - 2) / 3f; 
+
+        diffY = (diffY + 4) / 3f;
+
+        var x = diffX * Camera.main.pixelWidth;
+        var y = diffY * Camera.main.pixelHeight;
+
+        lastScreenHandPosition = Vector3.Lerp(lastScreenHandPosition, new Vector3(x, y, 0), 0.05f);
+        return lastScreenHandPosition;
+
+        //return Camera.main.WorldToScreenPoint(new Vector3(HandPosition.x, HandPosition.y, HandPosition.z - handScreenPositionMultiplier));
     }
     // Get hand state data from kinect body
     private HandState GetStateFromJointType(Body body, JointType type)
